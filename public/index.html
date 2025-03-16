@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Editor</title>
+  <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+  <style>
+    #editor {
+        display: none;
+        margin-top: 10px;
+    }
+</style>
+</head>
+
+<body>
+  <h1>Real-Time Editor</h1>
+  <input type="text" id="docIdInput" placeholder="Enter Document ID" />
+  <button onclick="joinDocument()">Join Document</button>
+
+  <textarea id="editor" rows="10" cols="50"></textarea>
+
+  <script>
+    const socket = io('http://localhost:3000');
+
+    const editor = document.getElementById('editor');
+
+    // editor.addEventListener('input', () => {
+    //   const data = editor.value;
+    //   socket.emit('editor-data', data);
+    // });
+
+    // // Receive editor data from the server
+    // socket.on('editor-data', (data) => {
+    //   editor.value = data;
+    // });
+
+
+    let docId = "";
+
+    function joinDocument() {
+      docId = document.getElementById("docIdInput").value;
+      if (!docId) {
+        alert("Please enter a Document ID!");
+        return;
+      }
+      console.log("Joined Document:", docId);
+      editor.style.display = "block";
+
+    }
+
+    editor.addEventListener("input", (event) => {
+      if (!docId) return; // Ensure a document is selected
+
+      const text = event.target.value;
+      socket.emit("editor-data", { docId, text });
+    });
+
+    socket.on("editor-data", (data) => {
+      if (data.docId === docId) { // Only update the correct document
+        document.getElementById("editor").value = data.text;
+      }
+    });
+
+  </script>
+</body>
+
+</html>
