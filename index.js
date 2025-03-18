@@ -31,16 +31,34 @@ io.on('connection', (socket) => {
     socket.emit("editor-data", { docId, text: storedText });
   });
 
+  const typingTimeouts = {}; 
+  
   // Handle real-time updates
   socket.on("editor-data", async (data) => {
     const { docId, text } = data;
     if (!docId) return;
 
-    await redisClient.set(docId, text); // Store latest text in Redis
-    sendToKafka("editor-events", JSON.stringify(data)); // Persist in Kafka
-
-    // Broadcast only to users in the same document room
+    // Broadcast updates in real-time to other users
     socket.to(docId).emit("editor-data", data);
+
+    // Debounce Redis and Kafka updates (wait before saving)
+    if (typingTimeouts[docId]) {
+      clearTimeout(typingTimeouts[docId]); // Reset previous timeout
+    }
+
+    typingTimeouts[docId] = setTimeout(async () => {
+      try {
+        // Save final text to Redis
+        await redisClient.set(docId, text);
+        console.log(`Saved document "${docId}" to Redis`);
+
+        // Send final update to Kafka
+        sendToKafka("editor-events", JSON.stringify(data));
+        console.log(`Sent document "${docId}" to Kafka`);
+      } catch (error) {
+        console.error(`Error processing document "${docId}":`, error);
+      }
+    }, 500); // Wait .5 second after the last keystroke
   });
 
 
@@ -69,7 +87,7 @@ app.get('/get', async (req, res) => {
 });
 
 // Start Kafka Consumer
-initConsumer();
+initConsumer(io, redisClient);
 
 const PORT = 3000;
 server.listen(PORT, () => {

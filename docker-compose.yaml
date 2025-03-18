@@ -1,4 +1,5 @@
 version: '3.8'
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -30,6 +31,19 @@ services:
     ports:
       - "6379:6379"
 
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: collab_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   backend:
     build: .
     container_name: backend
@@ -37,9 +51,18 @@ services:
     depends_on:
       - kafka
       - redis
+      - postgres
     ports:
       - "3000:3000"
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       KAFKA_BROKER: kafka:9092
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: collab_db
+
+volumes:
+  postgres_data:

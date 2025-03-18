@@ -47,6 +47,8 @@
       }
       console.log("Joined Document:", docId);
       editor.style.display = "block";
+        // Notify the server that this user has joined a document
+  socket.emit("join-document", docId);
 
     }
 

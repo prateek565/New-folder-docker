@@ -1,22 +1,33 @@
-const kafka = require('kafka-node');
+const kafka = require("kafka-node");
 
 const kafkaClient = new kafka.KafkaClient({
-  //  kafkaHost: 'localhost:9092' 
-   kafkaHost: 'kafka:9092' 
-  });
+  kafkaHost: "kafka:9092",
+});
+
 const consumer = new kafka.Consumer(
   kafkaClient,
-  [{ topic: 'editor-events', partition: 0 }],
+  [{ topic: "editor-events", partition: 0 }],
   { autoCommit: true }
 );
 
-const initConsumer = () => {
-  consumer.on('message', (message) => {
-    console.log('Message received from Kafka:', message.value);
+const initConsumer = (io) => {
+  consumer.on("message", async (message) => {
+    try {
+      const { docId, text } = JSON.parse(message.value);
+      console.log(`Kafka Consumer received update for docId "${docId}"`);
+
+      if (!docId) return;
+
+      // Broadcast only to users in the same document room
+      io.to(docId).emit("editor-data", { docId, text });
+
+    } catch (error) {
+      console.error("Error processing Kafka message:", error);
+    }
   });
 
-  consumer.on('error', (err) => {
-    console.error('Kafka Consumer error:', err);
+  consumer.on("error", (err) => {
+    console.error("Kafka Consumer error:", err);
   });
 };
 
