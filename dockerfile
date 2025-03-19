@@ -2,7 +2,7 @@
 FROM node:18
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
 COPY package*.json ./

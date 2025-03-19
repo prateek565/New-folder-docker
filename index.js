@@ -1,15 +1,21 @@
 const express = require('express');
+const cors =require('cors');
 const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
 const { sendToKafka } = require('./kafka/producer');
 const { initConsumer } = require('./kafka/consumer');
 const { connectRedis, redisClient } = require('./redis/redisClient');
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
-// Serve static files
+// Serve static files and mildleware
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors());
+app.use(express.json());
+
+app.use("/auth", authRoutes);
 
 // Connect Redis
 connectRedis();

@@ -63,6 +63,6 @@ services:
       DB_USER: admin
       DB_PASSWORD: admin
       DB_NAME: collab_db
-
+    command: [ "sh", "-c", "node config/db.js && node index.js" ] #start creating the user and document db if not already created 
 volumes:
   postgres_data:
